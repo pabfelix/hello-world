@@ -1,0 +1,78 @@
+kubectl explain pod.spec.securityContext | more
+
+kubectl explain pod.spec.containers.securityContext | more
+
+cat << EOF > pod-no-security-context.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-test-1
+spec:
+  containers:
+  - image: busybox:1.30.1
+    name: busybox
+    args:
+    - sleep
+    - "3600"
+EOF
+
+kubectl create -f pod-no-security-context.yaml
+kubectl exec security-context-test-1 -- ls /dev
+
+kubectl delete -f pod-no-security-context.yaml
+
+cat > pod-privileged.yaml <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-test-2
+spec:
+  containers:
+  - image: busybox:1.30.1
+    name: busybox
+    args:
+    - sleep
+    - "3600"
+    securityContext:
+      privileged: true
+EOF
+
+kubectl create -f pod-privileged.yaml
+kubectl exec security-context-test-2 -- ls /dev
+
+kubectl delete -f pod-privileged.yaml
+
+cat << EOF > pod-runas.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-test-3
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+  containers:
+  - image: busybox:1.30.1
+    name: busybox
+    args:
+    - sleep
+    - "3600"
+    securityContext:
+      runAsUser: 2000
+      readOnlyRootFilesystem: true
+EOF
+
+kubectl create -f pod-runas.yaml
+The Pod security context enforces that container processes do not run as root (runAsNonRoot) and sets the user ID of the container process to 1000. The container securityContext sets the container process' user ID to 2000 and sets the root file system to read-only.
+
+kubectl exec security-context-test-3 -it -- /bin/sh
+ps 
+running user is 2000
+touch /tmp/test-file
+exit
+not able to create file
+
+
+
+

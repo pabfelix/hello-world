@@ -1,0 +1,58 @@
+kubectl get networkpolicy deny-metadata -o yaml
+
+kubectl explain networkpolicy.spec.egress
+
+kubectl explain networkpolicy.spec.egress.to
+
+kubectl explain networkpolicy.spec.egress.to.ipBlock
+
+kubectl run busybox --image=busybox --rm -it /bin/sh
+
+wget https://google.com
+wget 169.254.169.254   part of Egress deny-metadata
+
+kubectl create namespace test
+kubectl run busybox --image=busybox --rm -it -n test /bin/sh
+wget 169.254.169.254
+
+Extract AWS credentials using the metadata endpoint:
+role=$(wget -qO- 169.254.169.254/latest/meta-data/iam/security-credentials)
+wget -qO- 169.254.169.254/latest/meta-data/iam/security-credentials/$role
+
+cat > app-policy.yaml <<EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app-tiers
+  namespace: test
+spec:
+  podSelector:
+    matchLabels:
+      app-tier: web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app-tier: cache
+    ports:
+    - port: 80
+EOF
+
+kubectl create -f app-policy.yaml
+
+kubectl run web-server -n test -l app-tier=web --image=nginx:1.15.1 --port 80
+
+# Get the web server pod's IP address
+web_ip=$(kubectl get pod -n test -o jsonpath='{.items[0].status.podIP}')
+# Pass in the web server IP addpress as an environment variable
+kubectl run busybox -n test -l app-tier=cache --image=busybox --env="web_ip=$web_ip" --rm -it /bin/sh
+# Send a requst to the web server on port 80
+wget $web_ip
+exit
+
+kubectl run web-server -n test -l app-tier=web --image=nginx:1.15.1 --port 80
+
+kubectl run busybox -n test --image=busybox --env="web_ip=$web_ip" --rm -it /bin/sh
+wget $web_ip

@@ -1,0 +1,25 @@
+Custom Resource definition
+kubectl get crds
+
+View the definition of the Application custom resource using the yaml output option and page the output through more:
+kubectl get crds applications.argoproj.io -o yaml | more
+
+kubectl get applications --all-namespaces
+guestbook app running
+kubectl describe application guestbook
+
+Port forward the Argo Server on port 8001 of the bastion host you are connected to and start it in the background (&): 
+nohup kubectl port-forward service/my-argo-cd-argocd-server -n default --address 0.0.0.0 8001:443 &>/dev/null &
+
+Enter the following to output the Argo web interface address:
+
+# Get the bastion's public IP
+bastion_ip=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4)
+# Output the Argo web address
+echo "http://$bastion_ip:8001"
+
+
+get password:
+kubectl -n default get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+
+kubectl edit applications guestbook

@@ -1,0 +1,57 @@
+Authentication:
+
+kubectl get pods
+
+kubectl get pods --v=6
+
+cat /home/ubuntu/.kube/config
+
+kubectl config --help
+
+kubectl config get-contexts
+
+Extract the user certificate from the kubeconfig file, and use OpenSSL to show the certificate details:
+grep "client-cert" ~/.kube/config | \
+  sed 's/\(.*client-certificate-data: \)\(.*\)/\2/' | \
+  base64 --decode \
+  > cert.pem
+openssl x509 -in cert.pem -text -noout
+
+Back up the kubeconfig before removing the user and observing the impact on a request:
+cp .kube/config .kube/config.orig
+sed -i '15,$d' .kube/config
+kubectl get pods --v=6
+
+will pompt for password
+
+cp .kube/config.orig .kube/config
+
+View the default ServiceAccount's token Secret:  
+kubectl get serviceaccounts default -o yaml
+
+
+View the value of the Secret by entering the following:
+kubectl get secrets -o yaml
+
+
+Authorization:
+kubectl get roles --all-namespaces
+kubectl get -n kube-system role kube-proxy -o yaml
+
+kubectl get clusterroles
+
+kubectl get clusterrole cluster-admin -o yaml
+
+kubectl get clusterrolebinding cluster-admin -o yaml
+
+kubectl auth can-i list nodes
+
+kubectl auth can-i list nodes --as=Tracy
+
+
+Admission Control:
+kubectl exec -n kube-system kube-apiserver-ip-10-0-0-100.us-west-2.compute.internal -- kube-apiserver -h | grep "enable-admission-plugins strings"
+
+Connect to control-plane node
+ssh 10.0.0.100 -oStrictHostKeyChecking=no
+ps -ef | grep kube-apiserver | grep enable-admission-plugins

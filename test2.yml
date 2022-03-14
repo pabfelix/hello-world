@@ -1,0 +1,135 @@
+
+
+kubectl create secret generic app-secret --from-literal=password=abnaoieb2073xsj
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: app
+spec: 
+  containers: 
+    - 
+      image: memcached
+      name: app
+      volumeMounts: 
+        - 
+          mountPath: /etc/app
+          name: dbcreds
+          readOnly: true
+  volumes: 
+    - 
+      name: dbcreds
+      secret: 
+        secretName: app-secret
+
+
+
+kubectl create serviceaccount secure-svc       
+Check how to set 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secpod
+    # This is the pod template
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 3000
+    runAsGroup: 3000
+  containers:
+  - name: c1
+    image: bash
+    command: ['/usr/local/bin/bash', '-c', 'sleep 3600']
+    securityContext:
+      runAsUser: 1000
+      readOnlyRootFilesystem: true
+  - name: c1
+    image: bash
+    command: ['/usr/local/bin/bash', '-c', 'sleep 3600']
+    securityContext:
+      runAsUser: 2000
+      readOnlyRootFilesystem: true
+
+
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web1
+  namespace: cal100
+    labels:
+    env: prod
+    type: processor
+spec:
+  containers:
+  - name: basic
+    image: nginx
+    resources:
+      requests:
+        memory: "100Mi" # 128Mi = 128 mebibytes
+      limits:
+        memory: "200Mi"
+    ports:
+    - containerPort: 80
+
+
+
+kubectl create configmap app-config --from-literal=COLOUR=red \
+  --from-literal=SPEED=fast
+
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redfastcar
+  namespace: ca200
+  labels:
+    platform: prod
+spec:
+  template:
+    # This is the pod template
+    spec:
+      containers:
+      - name: worker
+        image: busybox
+        command: ['/bin/sh', '-c', "env | grep -E 'COLOUR|SPEED'; sleep 3600"]
+        env:
+          - name: COLOUR
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: COLOUR
+          - name: SPEED
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: SPEED
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redfastcar
+  namespace: ca200
+  labels:
+    platform: prod
+    # This is the pod template
+  spec:
+    containers:
+    - name: worker
+      image: busybox
+      command: ['/bin/sh', '-c', "env | grep -E 'COLOUR|SPEED'; sleep 3600"]
+      env:
+        - name: COLOUR
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: COLOUR
+        - name: SPEED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPEED
+
+

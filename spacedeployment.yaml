@@ -1,0 +1,24 @@
+source <(kubectl completion bash)
+
+kubectl create deployment --image=httpd:2.4.38 web-server --dry-run=client -o yaml cb1  
+
+kubectl scale deployment web-server --replicas=6
+kubectl rollout history deployment web-server
+
+
+kubectl rollout undo deployment web-server
+
+No dry-run to create deployment 
+ 
+kubectl edit deployment web-server --record 
+kubectl expose deployment web-server --type =LoadBalancer --port=80
+
+Services provide a single endpoint for communicating with a Services also use label selectors to define the set of Pods. Although this lab step focuses on Deployments, it is common to have a Service to provide an endpoint for accessing the Pods in a Deployment. The load balancer type of Service allows communication with clients outside of the Kubernetes cluster. The ClusterIP and NodePort Service types 'a0are useful for 'a0accessing a set of Pods only within a cluster. 
+18.Watch the output of
+ get services
+EXTERNAL-IP
+column has a DNS address: 
+watch kubectl get services 
+ 
+ 
+

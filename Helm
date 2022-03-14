@@ -1,0 +1,55 @@
+POD_NAME=`kubectl get pods -o jsonpath='{.items[0].metadata.name}'`
+echo $POD_NAME
+
+sed -i 's/cloudacademydevops\/flask.*/cloudacademydevops\/flaskapp/g' deployment.yaml
+kubectl expose deployment frontend --port=80 --target-port=80
+kubectl get svc frontend 
+
+FRONTEND_SERVICE_IP=`kubectl get service/frontend -o jsonpath='{.spec.clusterIP}'`
+echo $FRONTEND_SERVICE_IP
+
+FRONTEND_POD_NAME=`kubectl get pods --no-headers -o custom-columns=":metadata.name"`
+echo $FRONTEND_POD_NAME
+
+kubectl exec -it $FRONTEND_POD_NAME -c nginx -- ls -la /var/log/nginx/
+
+kubectl logs $FRONTEND_POD_NAME nginx
+
+
+Helm:
+helm create test-app
+tree test-app/
+
+kubectl delete deploy,pods,svc --all
+Validate file
+helm template ./app
+
+Deploy file:
+helm template cloudacademy ./app | kubectl apply -f -
+
+helm template cloudacademy ./app | kubectl apply -f -
+
+kubectl get svc
+
+CLOUDACADEMY_APP_IP=`kubectl get service/cloudacademy-app -o jsonpath='{.spec.clusterIP}'`
+echo $CLOUDACADEMY_APP_IP
+
+curl -i http://$CLOUDACADEMY_APP_IP
+
+deploy Dev:
+helm template cloudacademy -f ./app/values.dev.yaml ./app | kubectl apply -f -
+
+helm package app/
+
+helm template cloudacademy -f ./app/values.prod.yaml ./app | kubectl delete -f - 
+create tar file 
+
+helm install cloudacademy-app app-0.1.0.tgz
+
+helm ls
+
+kubectl get deploy,pods,svc
+
+CLOUDACADEMY_APP_IP=`kubectl get service/cloudacademy-app -o jsonpath='{.spec.clusterIP}'`
+echo $CLOUDACADEMY_APP_IP
+

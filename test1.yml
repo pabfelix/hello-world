@@ -1,0 +1,124 @@
+
+kubectl create namespace cre
+kubectl config set-context $(kubectl config current-context) --namespace=cre
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: basic
+spec:
+  containers:
+  - name: basic
+    image: nginx:stable-alpine-perl
+    ports:
+    - containerPort: 80
+  restartPolicy: OnFailure  
+
+
+
+kubectl create namespace workers
+kubectl config set-context $(kubectl config current-context) --namespace=workers
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: worker
+  namespace: workers
+  labels:
+    company: acme
+    speed: fast
+    type: async
+spec:
+  template:
+    # This is the pod template
+    spec:
+      containers:
+      - name: worker
+        image: busybox
+        command: ['sh', '-c', 'echo "working..." && sleep 3600']
+      restartPolicy: OnFailure
+    # The pod template ends here
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker
+  namespace: workers
+  labels:
+    company: acme
+    speed: fast
+    type: async
+spec:
+  containers:
+  - name: worker
+    image: busybox
+    command: ['sh', '-c', 'echo "working..." && sleep 3600']
+  restartPolicy: OnFailure
+# The pod template ends here
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: borg1
+  namespace: core-system
+  labels:
+    platform: prod
+spec:
+  template:
+    # This is the pod template
+    spec:
+      containers:
+      - name: worker
+        image: busybox
+        command: ['sh', '-c', 'echo "borg.running..." && sleep 3600']
+        env:
+          - name: system
+            value: "borg"
+      restartPolicy: Always
+    # The pod template ends here    
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: borg1
+  namespace: core-system
+  labels:
+    platform: prod
+spec:
+  containers:
+  - name: worker
+    image: busybox
+    command: ['sh', '-c', 'echo "borg.running..." && sleep 3600']
+    env:
+      - name: system
+        value: "borg"
+  restartPolicy: Always
+# The pod template ends here    
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: basic
+  namespace: sys2
+spec:
+  containers:
+  - name: basic
+    image: nginx
+    ports:
+    - containerPort: 80
+  restartPolicy: Never  
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-zeroshutdown
+  namespace: sys2
+spec:
+  containers:
+  - name: web-zeroshutdown
+    image: nginx
+    ports:
+    - containerPort: 80
+  terminationGracePeriodSeconds: 0  
